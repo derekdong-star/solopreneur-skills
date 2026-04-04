@@ -30,3 +30,13 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+*__pycache__
+*pytest_cache
+
+.claude/
+
+/docs
+
+*.DS_Store
+
