@@ -8,7 +8,7 @@
 文章标题 + 话题 → 标题模式识别 → 视觉线索匹配 → Prompt 构建 → 图像生成 → 裁剪输出
 ```
 
-![处理流程图](https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAES825p3Kr6l7mP0CDj2z1o8xejOBzujgACwicAAp3j6FZwg2BITibaOzsE.png)
+![处理流程图](https://github.com/derekdong-star/image-hosting/blob/main/wechat-covers/2026-04-13-wechat-cover-%E6%88%91%E6%8A%8A%E8%87%AA%E5%B7%B1%E8%92%B8%E9%A6%8F%E6%88%90%E4%BA%86%E4%B8%80%E4%B8%AA-ai-%E6%8A%80%E8%83%BD%E5%8C%85.png)
 
 **4 个阶段：**
 
