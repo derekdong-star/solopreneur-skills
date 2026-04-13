@@ -1,0 +1,34 @@
+# 微信公众号封面图生成器
+
+基于文章标题语义的 AI 封面图生成工具，支持 OpenAI 和 Gemini 多模型。
+
+## 处理流程
+
+```
+文章标题 + 话题 → 标题模式识别 → 视觉线索匹配 → Prompt 构建 → 图像生成 → 裁剪输出
+```
+
+![处理流程图](https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAES825p3Kr6l7mP0CDj2z1o8xejOBzujgACwicAAp3j6FZwg2BITibaOzsE.png)
+
+**4 个阶段：**
+
+1. **输入与配置** — 解析 CLI 参数，加载 `settings.json`，选择图像提供商
+2. **标题分析引擎** — 识别 9 种标题模式（transform / contrast / guide / warning 等），提取视觉线索和情绪关键词
+3. **Prompt 构建** — 组合标题分析结果、风格变体、构图模板、反陈词列表，生成最终提示词
+4. **图像生成与输出** — 调用模型 API，Pillow 裁剪为 900x383 (2.35:1) PNG
+
+核心设计原则：**标题优先**（title-first），图像概念由标题语义驱动，而非仅仅依赖话题标签。
+
+## 快速开始
+
+```bash
+cp settings.json.example settings.json  # 填入 API Key
+
+# 基础用法
+uv run scripts/generate.py --title "你的文章标题" --topic "AI tools"
+
+# 试运行（只看 prompt，不生成图片）
+uv run scripts/generate.py --title "你的文章标题" --topic "AI tools" --dry-run
+```
+
+更多参数和配置说明见 [SKILL.md](SKILL.md)。

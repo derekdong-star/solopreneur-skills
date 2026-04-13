@@ -1,11 +1,8 @@
 """Shared interface and utilities for image generation providers."""
 
-import base64
 import io
 from pathlib import Path
 from typing import Protocol
-
-from PIL import Image
 
 # WeChat cover: 2.35:1 aspect ratio
 WECHAT_COVER_WIDTH = 900
@@ -62,6 +59,8 @@ def crop_to_wechat_cover(image_bytes: bytes) -> bytes:
     Returns:
         PNG bytes at 900x383
     """
+    from PIL import Image
+
     img = Image.open(io.BytesIO(image_bytes))
     src_w, src_h = img.size
     target_ratio = WECHAT_COVER_WIDTH / WECHAT_COVER_HEIGHT

@@ -1,12 +1,9 @@
 """Gemini image generation client."""
 
-from pathlib import Path
-from io import BytesIO
 import base64
+from pathlib import Path
 
-from PIL import Image as PILImage
-
-from image_client import ImageClient, ImageGenerationError
+from image_client import ImageClient, ImageGenerationError, crop_to_wechat_cover
 
 
 # Gemini image size mapping (use "1K", "2K", "4K" format per API docs)
@@ -79,17 +76,7 @@ class GeminiImageClient(ImageClient):
                 if isinstance(image_data, str):
                     image_data = base64.b64decode(image_data)
 
-                image = PILImage.open(BytesIO(image_data))
-
-                # Ensure RGB mode for PNG
-                if image.mode == "RGBA":
-                    rgb_image = PILImage.new("RGB", image.size, (255, 255, 255))
-                    rgb_image.paste(image, mask=image.split()[3])
-                    rgb_image.save(str(output_path), "PNG")
-                elif image.mode == "RGB":
-                    image.save(str(output_path), "PNG")
-                else:
-                    image.convert("RGB").save(str(output_path), "PNG")
+                output_path.write_bytes(crop_to_wechat_cover(image_data))
 
                 image_saved = True
 

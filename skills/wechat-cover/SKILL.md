@@ -1,11 +1,13 @@
 ---
 name: wechat-cover
-description: Generate WeChat official account cover images with proper 2.35:1 aspect ratio. Supports OpenAI DALL-E and Gemini image generation with customizable styles.
+description: Generate WeChat official account cover images with proper 2.35:1 aspect ratio. Uses title-first prompt construction so the image concept matches the article title, with OpenAI- and Gemini-based generation.
 ---
 
 # WeChat Cover Image Generator
 
-Generate professional cover images for WeChat official account articles with multi-provider support (OpenAI DALL-E or Gemini).
+Generate WeChat official account cover images with multi-provider support (OpenAI-compatible APIs or Gemini).
+
+The generator is now **title-first**: it analyzes the article title before building the prompt, so the image concept is driven primarily by the title's subject, action, contrast, or transformation, while `--topic` acts as a secondary context signal.
 
 ## What Makes a Good WeChat Cover?
 
@@ -14,10 +16,24 @@ Generate professional cover images for WeChat official account articles with mul
 - **No text**: WeChat overlays the article title
 - **Visual focus**: One clear focal point, not cluttered
 - **Clean & bright**: Modern aesthetic suitable for WeChat subscription feeds
+- **Title relevance**: The scene should visualize the title's core idea, not just the broad topic
+
+## Prompting Strategy
+
+- **Title-first semantics**: The script parses the title to identify visual patterns such as transformation, contrast, guide/tutorial, warning/traps, or personal narrative.
+- **Topic as secondary signal**: `--topic` still matters, but mainly for visual environment, style bias, and anti-cliche constraints.
+- **Deterministic prompt selection**: Secondary visual hints are chosen deterministically from the title/topic, reducing random drift between runs.
+- **Editorial composition**: The prompt reserves clean title-safe space and limits the image to a small number of meaningful elements.
+
+Use this skill when the title itself contains a strong idea such as:
+
+- `我把自己蒸馏成了一个 AI 技能包`
+- `如何用 AI 写出更像人的公众号文章`
+- `普通人做自媒体最容易踩的 3 个坑`
 
 ## Usage
 
-**Basic generation (OpenAI by default):**
+**Basic generation:**
 ```bash
 uv run skills/wechat-cover/scripts/generate.py \
   --title "Your Article Title" \
@@ -43,20 +59,49 @@ uv run skills/wechat-cover/scripts/generate.py \
   --provider openai
 ```
 
+**Inspect title analysis and final prompt without generating an image:**
+```bash
+uv run skills/wechat-cover/scripts/generate.py \
+  --title "我把自己蒸馏成了一个 AI 技能包" \
+  --topic "AI tools" \
+  --dry-run
+```
+
+**Override composition when you want a specific layout:**
+```bash
+uv run skills/wechat-cover/scripts/generate.py \
+  --title "普通人做自媒体最容易踩的 3 个坑" \
+  --topic "content business" \
+  --composition minimal
+```
+
 ## Parameters
 
 | Parameter       | Required | Description                                              |
 | ---------------| -------- | -------------------------------------------------------- |
-| `--title`      | Yes      | Article title (used to understand context)               |
-| `--topic`      | Yes      | Topic/category (e.g., "technology", "AI")              |
+| `--title`      | Yes      | Article title. This is the primary semantic driver of the image concept |
+| `--topic`      | Yes      | Topic/category. Secondary context used for style bias, environment, and anti-cliche constraints |
 | `--provider`   | No       | `openai` (default) or `gemini`                         |
 | `--base-url`   | No       | OpenAI-compatible base URL (env: OPENAI_BASE_URL)        |
 | `--model`      | No       | Model name override                                      |
-| `--style`      | No       | Style variant: default, tech, business, lifestyle, creative |
+| `--style`      | No       | Style override: `default`, `tech`, `business`, `lifestyle`, `creative`, or a custom style string |
+| `--composition`| No       | Composition override: `thirds`, `centered`, `minimal`, `split` |
 | `--filename`   | No       | Output filename (auto-generated if omitted)               |
 | `--resolution` | No       | 1K/2K/4K (default: 2K)                                |
 | `--output-dir` | No       | Output directory (default: current directory)             |
 | `--api-key`    | No       | API key (settings.json > env var)                        |
+| `--dry-run`    | No       | Print title analysis and final prompt without calling the model |
+
+## Interpreting `--dry-run`
+
+`--dry-run` is the fastest way to judge whether title relevance is improving before you spend tokens on generation.
+
+Look for these fields in the output:
+
+- `Pattern`: whether the title is being recognized as transformation / guide / warning / etc.
+- `Core subject`: whether the main object actually matches the title's key noun
+- `Focal scene`: whether the image describes the title's action or contrast, not just its topic
+- `Avoid`: whether the script is blocking obvious visual cliches for that category
 
 ## Configuration File (settings.json)
 
@@ -89,15 +134,24 @@ cp skills/wechat-cover/settings.json.example skills/wechat-cover/settings.json
 
 ## Style Variants
 
-All styles follow Anthropic's Claude design language — clean, bright, and restrained:
+These are editorial style biases, not replacements for title semantics. In most cases, the title analysis matters more than the style preset.
 
 | Variant   | Description                                              |
 |-----------|----------------------------------------------------------|
-| `default` | Warm minimalist: cream, beige, coral, sage. Organic shapes, soft lighting, generous whitespace |
-| `tech`    | Cool modern: off-white, slate blue, lavender, cyan. Geometric lines, glass morphism, grid composition |
-| `business`| Professional: warm white, navy, charcoal, amber. Architectural lines, natural light, clear hierarchy |
-| `lifestyle`| Warm organic: cream, blush, sage, golden. Natural textures, golden-hour light, handcrafted feel |
-| `creative`| Refined bold: white, coral red, teal, gold. Abstract geometric, asymmetric, paper-cut aesthetic |
+| `default` | Warm minimalist editorial look with soft natural light and generous negative space |
+| `tech`    | Precise geometry, layered translucent surfaces, quiet innovation |
+| `business`| Structured, architectural, calm authority |
+| `lifestyle`| Natural textures, warmth, handcrafted calm |
+| `creative`| Bold editorial asymmetry, tactile paper-cut energy |
+
+## Composition Templates
+
+| Template    | Use Case |
+|-------------|----------|
+| `thirds`    | Default editorial layout with safe title area on one side |
+| `centered`  | Singular icon-like concept with strong symmetry |
+| `minimal`   | Warning, trap, or extremely restrained concepts |
+| `split`     | Transformation, contrast, before/after scenes |
 
 ## Environment Variables
 
@@ -114,6 +168,8 @@ All styles follow Anthropic's Claude design language — clean, bright, and rest
 | `1K`       | 1024×1024           | 1024×1024           | Preview/thumbnail |
 | `2K`       | 1792×1024           | 2048×2048           | Standard cover   |
 | `4K`       | 1792×1024           | 4096×4096           | High quality     |
+
+Note: regardless of upstream provider size, the final output is normalized to **900×383 PNG** for WeChat cover use.
 
 ## Examples
 
@@ -147,9 +203,18 @@ uv run skills/wechat-cover/scripts/generate.py \
 ## Output
 
 - Auto-cropped and resized to **900×383** (2.35:1 WeChat cover format)
+- Both OpenAI and Gemini outputs are normalized to the same final WeChat cover dimensions
 - Saves to specified directory (default: current directory)
 - Filename format: `YYYY-MM-DD-wechat-cover-{title-slug}.png`
 - Format: PNG for best quality
+
+## Optimization Notes
+
+- If the image feels generic, inspect `--dry-run` first and check whether the `Core subject` and `Focal scene` actually reflect the title.
+- Prefer more specific titles over generic ones. `如何提高效率` will always be weaker than `我把周报流程压缩成了一个 10 分钟系统`.
+- Use `--composition split` for titles with obvious before/after or transformation logic.
+- Use `--composition minimal` for warning, risk, and trap-oriented titles.
+- Use explicit `--style creative` or `--style business` only when you want to bias the visual language; do not rely on style alone to fix weak title relevance.
 
 ## Requirements
 
